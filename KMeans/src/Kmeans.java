@@ -40,8 +40,7 @@ public class Kmeans {
 			HashMap<Integer, List<Point>> clusterPoints) {
 		
 		boolean isConverged = true;
-		int pointsChangedCount = 0;
-		
+		int pointsChangedCount = 0;		
 		for (int i = 0; i < K; i++) {			
 			List<Point> points = new ArrayList<Point>(clusterPoints.get(i));
 			pointsChangedCount = 0;
