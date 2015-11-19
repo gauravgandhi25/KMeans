@@ -34,8 +34,8 @@ public class Kmeans {
 		//printClusters(clusterPoints);
 		System.out.println(count-1);
 		
-		double val = calculateSSE(centroids,clusterPoints);
-		System.out.println(val);	
+		double SSE = calculateSSE(centroids,clusterPoints);
+		System.out.println(SSE);	
 	}
 
 	private static double calculateSSE(List<Point> centroids, HashMap<Integer, List<Point>> clusterPoints) {		
