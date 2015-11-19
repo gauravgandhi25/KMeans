@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class Kmeans {
 
-	public final static int K = 5;
+	public final static int K = 7;
 	public static String inputFileName = "test_data.txt";
 	public static String outputFileName = "output.txt";
 
@@ -29,11 +29,28 @@ public class Kmeans {
 			isConverged = updateCluster(centroids, clusterPoints);
 			count++;
 		}
-		while(count < 25);
+		while(count <= 25 && !isConverged);
 				
-		printClusters(clusterPoints);
+		//printClusters(clusterPoints);
 		System.out.println(count-1);
 		
+		double val = calculateSSE(centroids,clusterPoints);
+		System.out.println(val);	
+	}
+
+	private static double calculateSSE(List<Point> centroids, HashMap<Integer, List<Point>> clusterPoints) {		
+		double SSE = 0;
+		for(int i=0;i<K;i++){
+			double temp = 0;
+			for(Point p :clusterPoints.get(i)){
+				
+				double distance = Point.getDistance(p, centroids.get(i));
+				distance = distance * distance;
+				temp +=distance;
+			}
+			SSE +=temp;
+		}				
+		return SSE;
 	}
 
 	private static boolean updateCluster(List<Point> centroids,

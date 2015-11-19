@@ -39,7 +39,7 @@ public class Point {
 
 	@Override
 	public String toString() {
-		return id + "";
+		return id +"";
 	}
 
 	public int getCluster() {
