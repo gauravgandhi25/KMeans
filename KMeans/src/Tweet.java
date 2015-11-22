@@ -4,11 +4,11 @@ import java.util.Set;
 
 public class Tweet {
 	
-	int id;
+	String id;
 	String text;
 	int cluster;
 
-	public Tweet(int id, String text) {
+	public Tweet(String id, String text) {
 		super();
 		this.id = id;
 		this.text = text;
@@ -16,7 +16,7 @@ public class Tweet {
 
 	@Override
 	public String toString() {
-		return id +"";
+		return "Tweet [id=" + id + ", text=" + text + ", cluster=" + cluster + "]";
 	}
 
 	public int getCluster() {
@@ -31,8 +31,8 @@ public class Tweet {
 		float distance = 0;	 	
 		//Jaccard Similarity
 
-		HashSet<String> text1Set = new HashSet<String>(Arrays.asList(t1.text.split(" ")));
-		HashSet<String> text2Set = new HashSet<String>(Arrays.asList(t2.text.split(" ")));
+		HashSet<String> text1Set = new HashSet<String>(Arrays.asList(t1.text.toLowerCase().split(" ")));
+		HashSet<String> text2Set = new HashSet<String>(Arrays.asList(t2.text.toLowerCase().split(" ")));
 		
 		Set<String> union = (Set<String>) text1Set.clone();
 		union.addAll(text2Set);

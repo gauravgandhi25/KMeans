@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +10,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class TweetsKMeans {
 
@@ -19,13 +25,16 @@ public class TweetsKMeans {
 
 	public static void main(String[] args) throws IOException {
 
-		List<Point> points = readFile(inputFileName);
-		HashMap<Integer, List<Point>> clusterPoints = new HashMap<Integer, List<Point>>();
-		List<Point> centroids = new ArrayList<Point>();
+		List<Tweet> tweets = readFile(inputFileName);
+		
+		
+		HashMap<Integer, List<Tweet>> clusterPoints = new HashMap<Integer, List<Tweet>>();
+		List<Tweet> centroids = new ArrayList<Tweet>();
 
 		// Initialization
-		initialize(points, centroids, clusterPoints);
+		initialize(tweets, centroids, clusterPoints);
 		updateCentroids(centroids, clusterPoints);
+		/*
 		int count = 1;
 		boolean isConverged;					
 		do{
@@ -39,6 +48,7 @@ public class TweetsKMeans {
 		double SSE = calculateSSE(centroids,clusterPoints);
 		System.out.println("SSE: " + SSE);
 		writeToFile(outputFileName, clusterPoints);
+		*/
 	}
 
 	private static void writeToFile(String outputFileName, HashMap<Integer, List<Point>> clusterPoints) throws IOException {
@@ -54,21 +64,6 @@ public class TweetsKMeans {
 			writer.write("\n");
 		}	
 		writer.close();
-	}
-
-	private static double calculateSSE(List<Point> centroids, HashMap<Integer, List<Point>> clusterPoints) {		
-		double SSE = 0;
-		for(int i=0;i<K;i++){
-			double temp = 0;
-			for(Point p :clusterPoints.get(i)){
-				
-				double distance = Point.getDistance(p, centroids.get(i));
-				distance = distance * distance;
-				temp +=distance;
-			}
-			SSE +=temp;
-		}				
-		return SSE;
 	}
 
 	private static boolean updateCluster(List<Point> centroids,
@@ -94,53 +89,56 @@ public class TweetsKMeans {
 		return isConverged;
 	}
 
-	private static void initialize(List<Point> points,
-			List<Point> centroids,
-			HashMap<Integer, List<Point>> clusterPoints) {
+	private static void initialize(List<Tweet> tweets,
+			List<Tweet> centroids,
+			HashMap<Integer, List<Tweet>> clusterPoints) {
 
 		// Set Random K Points as Centroids
 		for (int i = 0; i < K; i++) {
-			List<Point> cluster = new LinkedList<Point>();
-			int random = randomInt(0, points.size() - 1);
-			Point p = points.remove(random);
-			p.setCluster(i);
-			centroids.add(p);
-			cluster.add(p);
+			List<Tweet> cluster = new LinkedList<Tweet>();
+			int random = randomInt(0, tweets.size() - 1);
+			Tweet t = tweets.remove(random);
+			t.setCluster(i);
+			centroids.add(t);
+			cluster.add(t);
 			clusterPoints.put(i, cluster);
 		}
 		// form the initial cluster
-		for (Point p : points) {
-			int nearestCentroid = getNearestCentroid(p, centroids);
-			p.setCluster(nearestCentroid);
-			clusterPoints.get(nearestCentroid).add(p);
+		for (Tweet tweet : tweets) {
+			int nearestCentroid = getNearestCentroid(tweet, centroids);
+			tweet.setCluster(nearestCentroid);
+			clusterPoints.get(nearestCentroid).add(tweet);
 		}
 	}
 
-	private static void updateCentroids(List<Point> centroids,
-			HashMap<Integer, List<Point>> clusterPoints) {
+	private static void updateCentroids(List<Tweet> centroids,
+			HashMap<Integer, List<Tweet>> clusterPoints) {
 		for (int i = 0; i < K; i++) {
 			centroids.set(i, computerCentroid(clusterPoints.get(i)));
 		}
 	}
 
-	private static Point computerCentroid(List<Point> points) {
-		float x = 0, y = 0;
-		int count = 0;
-		for (Point p : points) {
-			x += p.x;
-			y += p.y;
-			count++;
+	private static Tweet computerCentroid(List<Tweet> list) {
+		
+		int minAverageDist = 0;
+		double minAverageDistTweet = Double.MAX_VALUE;
+		
+		for(Tweet tweet1 : list){
+			
+			for(Tweet tweet2 : list){
+				
+			}
 		}
-		x = x / count;
-		y = y / count;
+		
+		
 		return new Point(-1, x, y);
 	}
 	
-	public static int getNearestCentroid(Point p, List<Point> centroids) {
+	public static int getNearestCentroid(Tweet tweet, List<Tweet> centroids) {
 		int nearest = 0;
 		double nearestDistance = Double.MAX_VALUE;
 		for (int i = 0; i < K; i++) {
-			double temp = Point.getDistance(p, centroids.get(i));
+			double temp = Tweet.getDistance(tweet, centroids.get(i));
 			if (temp < nearestDistance) {
 				nearest = i;
 				nearestDistance = temp;
@@ -156,22 +154,21 @@ public class TweetsKMeans {
 		return randomNum;
 	}
 
-	private static List<Point> readFile(String inputFileName)
+	private static List<Tweet> readFile(String inputFileName)
 			throws IOException {
 
-		BufferedReader reader = new BufferedReader(
-				new FileReader(inputFileName));
-		reader.readLine();
-		String line;
-		List<Point> points = new LinkedList<Point>();
-		while ((line = reader.readLine()) != null) {
-			String[] array = line.split("\t");
-			int id = Integer.parseInt(array[0]);
-			float x = Float.parseFloat(array[1]);
-			float y = Float.parseFloat(array[2]);
-			Point entry = new Point(id, x, y);
-			points.add(entry);
-		}
-		return points;
+		List<Tweet> tweets = new LinkedList<Tweet>();
+		JsonParser parser = new JsonParser();
+		BufferedReader reader = new BufferedReader(new FileReader(inputFileName));									
+		
+		while(true){
+			String line = reader.readLine();
+			if(line == null)
+				break;
+			JsonObject object = parser.parse(line).getAsJsonObject();
+			Tweet tweet = new Tweet(object.get("id").toString(), object.get("text").toString());
+			tweets.add(tweet);			
+		}	
+		return tweets;
 	}
 }
