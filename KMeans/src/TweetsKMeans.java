@@ -7,34 +7,36 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class TweetsKMeans {
 
-	public final static int K = 11;
+	public final static int K = 25;
 	public static String inputFileName = "Tweets.json";
 	public static String initialSeedsFile = "InitialSeeds.txt";	
-	public static String outputFileName = "output.txt";
+	public static String outputFileName = "tweetoutput.txt";
 
 	public static void main(String[] args) throws IOException {
 
-		List<Tweet> tweets = readFile(inputFileName);
+		HashSet<String> initialSeeds = readInitialSeeds(initialSeedsFile);
+		List<Tweet> centroids = new ArrayList<Tweet>();
 		
+		List<Tweet> tweets = readFile(inputFileName,centroids,initialSeeds);
 		
 		HashMap<Integer, List<Tweet>> clusterPoints = new HashMap<Integer, List<Tweet>>();
-		List<Tweet> centroids = new ArrayList<Tweet>();
+		
 
 		// Initialization
-		initialize(tweets, centroids, clusterPoints);
+		
+		initialize(tweets, centroids, clusterPoints);						
 		updateCentroids(centroids, clusterPoints);
-		/*
+		
 		int count = 1;
 		boolean isConverged;					
 		do{
@@ -42,44 +44,58 @@ public class TweetsKMeans {
 			count++;
 		}
 		while(count <= 25 && !isConverged);
-				
-		System.out.println("Converged in " + (count-1) + " steps");
 		
-		double SSE = calculateSSE(centroids,clusterPoints);
-		System.out.println("SSE: " + SSE);
+		System.out.println("Converged in " + (count-1) + " steps");		
 		writeToFile(outputFileName, clusterPoints);
-		*/
 	}
 
-	private static void writeToFile(String outputFileName, HashMap<Integer, List<Point>> clusterPoints) throws IOException {
+	private static HashSet<String> readInitialSeeds(String initialSeedsFile) throws IOException {
+		
+		HashSet<String> initialSeeds = new HashSet<String>();		
+		BufferedReader reader = new BufferedReader(new FileReader(initialSeedsFile));
+		
+		while(true){
+			String line = reader.readLine();
+			if(line == null){
+				break;
+			}
+			initialSeeds.add(line.replace(",", ""));
+		}
+		return initialSeeds;
+	}
+
+	private static void writeToFile(String outputFileName, HashMap<Integer, List<Tweet>> clusterPoints) throws IOException {
 		
 		File outputFile = new File(outputFileName);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		
 		for(int i = 0; i < clusterPoints.size();i++){
 			writer.write(i+1 + "\t");
-			for(Point p : clusterPoints.get(i)){
-				writer.write(p.id + ",");				
+			for(Tweet tweet : clusterPoints.get(i)){
+				writer.write(tweet.id + ",");				
 			}
 			writer.write("\n");
 		}	
 		writer.close();
 	}
 
-	private static boolean updateCluster(List<Point> centroids,
-			HashMap<Integer, List<Point>> clusterPoints) {
+	private static boolean updateCluster(List<Tweet> centroids,
+			HashMap<Integer, List<Tweet>> clusterPoints) {
 		
 		boolean isConverged = true;
 		int pointsChangedCount = 0;		
+		
 		for (int i = 0; i < K; i++) {			
-			List<Point> points = new ArrayList<Point>(clusterPoints.get(i));
+			
+			List<Tweet> tweets = new ArrayList<Tweet>(clusterPoints.get(i));
 			pointsChangedCount = 0;
-			for (Point p : points) {
-				int nearestCentroid = getNearestCentroid(p, centroids);
-				if (p.cluster != nearestCentroid) {
-					p.setCluster(nearestCentroid);
-					clusterPoints.get(i).remove(points.indexOf(p)-pointsChangedCount);					
-					clusterPoints.get(nearestCentroid).add(p);
+			for (Tweet tweet : tweets) {
+				int nearestCentroid = getNearestCentroid(tweet, centroids);
+				
+				if (tweet.cluster != nearestCentroid) {
+					tweet.setCluster(nearestCentroid);
+					clusterPoints.get(i).remove(tweets.indexOf(tweet)-pointsChangedCount);					
+					clusterPoints.get(nearestCentroid).add(tweet);
 					isConverged = false;
 					pointsChangedCount++;
 				}
@@ -92,14 +108,12 @@ public class TweetsKMeans {
 	private static void initialize(List<Tweet> tweets,
 			List<Tweet> centroids,
 			HashMap<Integer, List<Tweet>> clusterPoints) {
-
+				
 		// Set Random K Points as Centroids
 		for (int i = 0; i < K; i++) {
-			List<Tweet> cluster = new LinkedList<Tweet>();
-			int random = randomInt(0, tweets.size() - 1);
-			Tweet t = tweets.remove(random);
-			t.setCluster(i);
-			centroids.add(t);
+			List<Tweet> cluster = new LinkedList<Tweet>();			
+			Tweet t = centroids.get(i);
+			t.setCluster(i);			
 			cluster.add(t);
 			clusterPoints.put(i, cluster);
 		}
@@ -120,25 +134,30 @@ public class TweetsKMeans {
 
 	private static Tweet computerCentroid(List<Tweet> list) {
 		
-		int minAverageDist = 0;
-		double minAverageDistTweet = Double.MAX_VALUE;
+		float minAverageDist = Float.MAX_VALUE;
+		Tweet minAverageDistTweet = null;
 		
 		for(Tweet tweet1 : list){
-			
+			float temp = 0;
 			for(Tweet tweet2 : list){
-				
+				temp += Tweet.getDistance(tweet1, tweet2);
+			}
+			
+			if(temp < minAverageDist){
+				minAverageDist = temp;
+				minAverageDistTweet = tweet1;
 			}
 		}
 		
-		
-		return new Point(-1, x, y);
+		return minAverageDistTweet;		
 	}
 	
 	public static int getNearestCentroid(Tweet tweet, List<Tweet> centroids) {
 		int nearest = 0;
-		double nearestDistance = Double.MAX_VALUE;
+		float nearestDistance = Float.MAX_VALUE;
 		for (int i = 0; i < K; i++) {
-			double temp = Tweet.getDistance(tweet, centroids.get(i));
+				
+			float temp = Tweet.getDistance(tweet, centroids.get(i));
 			if (temp < nearestDistance) {
 				nearest = i;
 				nearestDistance = temp;
@@ -154,7 +173,7 @@ public class TweetsKMeans {
 		return randomNum;
 	}
 
-	private static List<Tweet> readFile(String inputFileName)
+	private static List<Tweet> readFile(String inputFileName, List<Tweet> centroids, HashSet<String> initialSeeds)
 			throws IOException {
 
 		List<Tweet> tweets = new LinkedList<Tweet>();
@@ -166,7 +185,11 @@ public class TweetsKMeans {
 			if(line == null)
 				break;
 			JsonObject object = parser.parse(line).getAsJsonObject();
-			Tweet tweet = new Tweet(object.get("id").toString(), object.get("text").toString());
+			Tweet tweet = new Tweet(object.get("id").toString(), object.get("text").toString().replace("\"", ""));
+			if(initialSeeds.contains(object.get("id").toString())){
+					centroids.add(tweet);
+					continue;
+			}
 			tweets.add(tweet);			
 		}	
 		return tweets;
