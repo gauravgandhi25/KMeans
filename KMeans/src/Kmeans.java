@@ -1,5 +1,8 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +13,7 @@ import java.util.Random;
 
 public class Kmeans {
 
-	public final static int K = 7;
+	public final static int K = 11;
 	public static String inputFileName = "test_data.txt";
 	public static String outputFileName = "output.txt";
 
@@ -31,11 +34,26 @@ public class Kmeans {
 		}
 		while(count <= 25 && !isConverged);
 				
-		//printClusters(clusterPoints);
-		System.out.println(count-1);
+		System.out.println("Converged in " + (count-1) + " steps");
 		
 		double SSE = calculateSSE(centroids,clusterPoints);
-		System.out.println(SSE);	
+		System.out.println("SSE: " + SSE);
+		writeToFile(outputFileName, clusterPoints);
+	}
+
+	private static void writeToFile(String outputFileName, HashMap<Integer, List<Point>> clusterPoints) throws IOException {
+		
+		File outputFile = new File(outputFileName);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+		
+		for(int i = 0; i < clusterPoints.size();i++){
+			writer.write(i+1 + "\t");
+			for(Point p : clusterPoints.get(i)){
+				writer.write(p.id + ",");				
+			}
+			writer.write("\n");
+		}	
+		writer.close();
 	}
 
 	private static double calculateSSE(List<Point> centroids, HashMap<Integer, List<Point>> clusterPoints) {		
@@ -81,7 +99,6 @@ public class Kmeans {
 			HashMap<Integer, List<Point>> clusterPoints) {
 
 		// Set Random K Points as Centroids
-
 		for (int i = 0; i < K; i++) {
 			List<Point> cluster = new LinkedList<Point>();
 			int random = randomInt(0, points.size() - 1);
@@ -118,17 +135,7 @@ public class Kmeans {
 		y = y / count;
 		return new Point(-1, x, y);
 	}
-
-	private static void printClusters(
-			HashMap<Integer, List<Point>> clusterPoints) {
-		for (Entry<Integer, List<Point>> entry : clusterPoints.entrySet()) {
-			System.out.print(entry.getKey());
-			System.out.print(" : ");
-			System.out.print(entry.getValue());
-			System.out.println("\n");
-		}
-	}
-
+	
 	public static int getNearestCentroid(Point p, List<Point> centroids) {
 		int nearest = 0;
 		double nearestDistance = Double.MAX_VALUE;
@@ -156,7 +163,6 @@ public class Kmeans {
 				new FileReader(inputFileName));
 		reader.readLine();
 		String line;
-
 		List<Point> points = new LinkedList<Point>();
 		while ((line = reader.readLine()) != null) {
 			String[] array = line.split("\t");
@@ -168,5 +174,4 @@ public class Kmeans {
 		}
 		return points;
 	}
-
 }
