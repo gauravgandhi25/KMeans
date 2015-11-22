@@ -17,21 +17,23 @@ import com.google.gson.JsonParser;
 
 public class TweetsKMeans {
 
-	public final static int K = 25;
+	public static int K = 25;
 	public static String inputFileName = "Tweets.json";
 	public static String initialSeedsFile = "InitialSeeds.txt";	
-	public static String outputFileName = "tweetoutput.txt";
+	public static String outputFileName = "tweets-k-means-output.txt";
 
 	public static void main(String[] args) throws IOException {
-
+		
+		K = Integer.parseInt(args[0]);
+		initialSeedsFile = args[1];
+		inputFileName = args[2];
+		outputFileName = args[3];
+		
 		HashSet<String> initialSeeds = readInitialSeeds(initialSeedsFile);
-		List<Tweet> centroids = new ArrayList<Tweet>();
-		
-		List<Tweet> tweets = readFile(inputFileName,centroids,initialSeeds);
-		
+		List<Tweet> centroids = new ArrayList<Tweet>();		
+		List<Tweet> tweets = readFile(inputFileName,centroids,initialSeeds);		
 		HashMap<Integer, List<Tweet>> clusterPoints = new HashMap<Integer, List<Tweet>>();
 		
-
 		// Initialization
 		
 		initialize(tweets, centroids, clusterPoints);						
@@ -44,13 +46,29 @@ public class TweetsKMeans {
 			count++;
 		}
 		while(count <= 25 && !isConverged);
-		
-		System.out.println("Converged in " + (count-1) + " steps");		
+					
+		double SSE = calculateSSE(centroids,clusterPoints);
+		System.out.println("SSE: " + SSE);		
 		writeToFile(outputFileName, clusterPoints);
+		System.out.println("Output written to "+outputFileName);
+	}
+	
+	private static double calculateSSE(List<Tweet> centroids, HashMap<Integer, List<Tweet>> clusterPoints) {		
+		double SSE = 0;
+		for(int i=0;i<K;i++){
+			double temp = 0;
+			for(Tweet tweet :clusterPoints.get(i)){
+				
+				float distance = Tweet.getDistance(tweet, centroids.get(i));
+				distance = distance * distance;
+				temp +=distance;
+			}
+			SSE +=temp;
+		}				
+		return SSE;
 	}
 
-	private static HashSet<String> readInitialSeeds(String initialSeedsFile) throws IOException {
-		
+	private static HashSet<String> readInitialSeeds(String initialSeedsFile) throws IOException {		
 		HashSet<String> initialSeeds = new HashSet<String>();		
 		BufferedReader reader = new BufferedReader(new FileReader(initialSeedsFile));
 		
@@ -72,7 +90,7 @@ public class TweetsKMeans {
 		for(int i = 0; i < clusterPoints.size();i++){
 			writer.write(i+1 + "\t");
 			for(Tweet tweet : clusterPoints.get(i)){
-				writer.write(tweet.id + ",");				
+				writer.write(tweet.id + ", ");				
 			}
 			writer.write("\n");
 		}	
@@ -90,8 +108,7 @@ public class TweetsKMeans {
 			List<Tweet> tweets = new ArrayList<Tweet>(clusterPoints.get(i));
 			pointsChangedCount = 0;
 			for (Tweet tweet : tweets) {
-				int nearestCentroid = getNearestCentroid(tweet, centroids);
-				
+				int nearestCentroid = getNearestCentroid(tweet, centroids);				
 				if (tweet.cluster != nearestCentroid) {
 					tweet.setCluster(nearestCentroid);
 					clusterPoints.get(i).remove(tweets.indexOf(tweet)-pointsChangedCount);					
@@ -147,8 +164,7 @@ public class TweetsKMeans {
 				minAverageDist = temp;
 				minAverageDistTweet = tweet1;
 			}
-		}
-		
+		}		
 		return minAverageDistTweet;		
 	}
 	
