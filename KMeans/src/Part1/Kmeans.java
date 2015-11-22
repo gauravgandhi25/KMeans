@@ -1,3 +1,5 @@
+package Part1;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,11 +15,15 @@ import java.util.Random;
 
 public class Kmeans {
 
-	public final static int K = 11;
+	public static int K = 11;
 	public static String inputFileName = "test_data.txt";
-	public static String outputFileName = "output.txt";
+	public static String outputFileName = "kmeans-output.txt";
 
 	public static void main(String[] args) throws IOException {
+		
+		K = Integer.parseInt(args[0]);
+		inputFileName = args[1];
+		outputFileName = args[2];
 
 		List<Point> points = readFile(inputFileName);
 		HashMap<Integer, List<Point>> clusterPoints = new HashMap<Integer, List<Point>>();
