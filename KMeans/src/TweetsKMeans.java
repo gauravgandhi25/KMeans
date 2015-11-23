@@ -1,5 +1,3 @@
-package Part2;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,10 +11,54 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.Arrays;
+import java.util.Set;
 
+class Tweet {
+	
+	String id;
+	String text;
+	int cluster;
+
+	public Tweet(String id, String text) {
+		super();
+		this.id = id;
+		this.text = text;
+	}
+
+	@Override
+	public String toString() {
+		return "Tweet ["+ text+"]";
+	}
+
+	public int getCluster() {
+		return cluster;
+	}
+
+	public void setCluster(int cluster) {
+		this.cluster = cluster;
+	}
+	
+	public static float getDistance(Tweet t1, Tweet t2){		
+		float distance = 0;	 	
+		//Jaccard Similarity
+		
+		HashSet<String> text1Set = new HashSet<String>(Arrays.asList(t1.text.toLowerCase().split(" ")));
+		HashSet<String> text2Set = new HashSet<String>(Arrays.asList(t2.text.toLowerCase().split(" ")));
+		
+		
+		Set<String> union = (Set<String>) text1Set.clone();
+		union.addAll(text2Set);
+				
+		Set<String> intersection = (Set<String>) text1Set.clone();
+		intersection.retainAll(text2Set);
+			
+		distance = 1.0f - (float)intersection.size() / (float) union.size();	
+		return distance;
+	}
+}
 public class TweetsKMeans {
 
 	public static int K = 25;
@@ -48,10 +90,10 @@ public class TweetsKMeans {
 			count++;
 		}
 		while(count <= 25 && !isConverged);
-					
+		
 		double SSE = calculateSSE(centroids,clusterPoints);
 		System.out.println("SSE: " + SSE);		
-		writeToFile(outputFileName, clusterPoints);
+		writeToFile(outputFileName, clusterPoints,centroids);
 		System.out.println("Output written to "+outputFileName);
 	}
 	
@@ -84,7 +126,7 @@ public class TweetsKMeans {
 		return initialSeeds;
 	}
 
-	private static void writeToFile(String outputFileName, HashMap<Integer, List<Tweet>> clusterPoints) throws IOException {
+	private static void writeToFile(String outputFileName, HashMap<Integer, List<Tweet>> clusterPoints, List<Tweet> centroids) throws IOException {
 		
 		File outputFile = new File(outputFileName);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
@@ -94,7 +136,7 @@ public class TweetsKMeans {
 			for(Tweet tweet : clusterPoints.get(i)){
 				writer.write(tweet.id + ", ");				
 			}
-			writer.write("\n");
+			writer.newLine();
 		}	
 		writer.close();
 	}
@@ -203,7 +245,7 @@ public class TweetsKMeans {
 			if(line == null)
 				break;
 			JsonObject object = parser.parse(line).getAsJsonObject();
-			Tweet tweet = new Tweet(object.get("id").toString(), object.get("text").toString().replace("\"", ""));
+			Tweet tweet = new Tweet(object.get("id").toString(), object.get("text").toString().replace("\"", "").replaceAll("\\p{Punct}+", ""));
 			if(initialSeeds.contains(object.get("id").toString())){
 					centroids.add(tweet);
 					continue;

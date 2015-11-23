@@ -1,5 +1,3 @@
-package Part1;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,12 +8,46 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Random;
+
+class Point {
+	
+	int id;
+	float x,y;
+	int cluster;
+
+	public Point(int id, float x, float y) {
+		super();
+		this.id = id;
+		this.x = x;
+		this.y = y;
+	}
+
+	@Override
+	public String toString() {
+		return id +"";
+	}
+
+	public int getCluster() {
+		return cluster;
+	}
+
+	public void setCluster(int cluster) {
+		this.cluster = cluster;
+	}
+	
+	public static double getDistance(Point p1, Point p2){		
+		double distance = 0;		 
+		float ycoord = Math.abs (p1.y - p2.y);
+		float xcoord = Math.abs (p1.x- p2.x);    
+		distance = Math.sqrt((ycoord)*(ycoord) +(xcoord)*(xcoord));		  		
+		return distance;
+	}	
+}
 
 public class Kmeans {
 
-	public static int K = 11;
+	public static int K = 5;
 	public static String inputFileName = "test_data.txt";
 	public static String outputFileName = "kmeans-output.txt";
 
@@ -57,7 +89,7 @@ public class Kmeans {
 			for(Point p : clusterPoints.get(i)){
 				writer.write(p.id + ",");				
 			}
-			writer.write("\n");
+			writer.newLine();
 		}	
 		writer.close();
 	}
